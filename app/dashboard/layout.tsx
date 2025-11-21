@@ -5,6 +5,9 @@ import { createClient } from '@/lib/supabase/client';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import type { User } from '@supabase/supabase-js';
+import { Building2 } from 'lucide-react';
+import { OrganizationProvider } from '@/lib/contexts/OrganizationContext';  
+import { OrganizationSelector } from '@/components/OrganizationSelector';  
 
 export default function DashboardLayout({
   children,
@@ -98,6 +101,12 @@ export default function DashboardLayout({
         </svg>
       ),
     },
+    // ⭐ AGREGAR ESTO - NUEVO
+    {
+      name: 'Organizaciones',
+      href: '/dashboard/organizations',
+      icon: <Building2 className="w-5 h-5" />,
+    },
     {
       name: 'Perfil',
       href: '/dashboard/profile',
@@ -126,25 +135,99 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
-      <aside
-        className={`${
-          sidebarOpen ? 'w-64' : 'w-20'
-        } bg-white shadow-lg transition-all duration-300 flex flex-col`}
-      >
-        {/* Logo */}
-        <div className="p-6 border-b">
-          <div className="flex items-center justify-between">
+    <OrganizationProvider>
+      <div className="min-h-screen bg-gray-50 flex">
+        {/* Sidebar */}
+        <aside
+          className={`${
+            sidebarOpen ? 'w-64' : 'w-20'
+          } bg-white shadow-lg transition-all duration-300 flex flex-col`}
+        >
+          {/* Logo */}
+          <div className="p-6 border-b">
+            <div className="flex items-center justify-between mb-4">
+              {sidebarOpen && (
+                <h1 className="text-xl font-bold text-gray-900">Nexus</h1>
+              )}
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="p-2 rounded-lg hover:bg-gray-100"
+              >
+                <svg
+                  className="w-5 h-5 text-gray-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
+                </svg>
+              </button>
+            </div>
+            
+            {/* ⭐ AGREGAR ESTO - SELECTOR DE ORGANIZACIÓN */}
             {sidebarOpen && (
-              <h1 className="text-xl font-bold text-gray-900">Nexus</h1>
+              <div className="mt-3">
+                <OrganizationSelector />
+              </div>
             )}
+          </div>
+
+          {/* Navigation */}
+          <nav className="flex-1 p-4">
+            <ul className="space-y-2">
+              {navigation.map((item) => {
+                const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname?.startsWith(item.href));
+                return (
+                  <li key={item.name}>
+                    <Link
+                      href={item.href}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-lg transition ${
+                        isActive
+                          ? 'bg-orange-50 text-orange-600'
+                          : 'text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      {item.icon}
+                      {sidebarOpen && (
+                        <span className="font-medium">{item.name}</span>
+                      )}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
+
+          {/* User Info */}
+          <div className="p-4 border-t">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
+                <span className="text-orange-600 font-semibold">
+                  {user?.user_metadata?.full_name?.charAt(0).toUpperCase() || 'U'}
+                </span>
+              </div>
+              {sidebarOpen && (
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">
+                    {user?.user_metadata?.full_name || 'Usuario'}
+                  </p>
+                  <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                </div>
+              )}
+            </div>
             <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 rounded-lg hover:bg-gray-100"
+              onClick={handleLogout}
+              className={`w-full flex items-center gap-3 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition ${
+                !sidebarOpen && 'justify-center'
+              }`}
             >
               <svg
-                className="w-5 h-5 text-gray-600"
+                className="w-5 h-5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -153,82 +236,17 @@ export default function DashboardLayout({
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h16"
+                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
                 />
               </svg>
+              {sidebarOpen && <span>Cerrar Sesión</span>}
             </button>
           </div>
-        </div>
+        </aside>
 
-        {/* Navigation */}
-        <nav className="flex-1 p-4">
-          <ul className="space-y-2">
-            {navigation.map((item) => {
-              const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname?.startsWith(item.href));
-              return (
-                <li key={item.name}>
-                  <Link
-                    href={item.href}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition ${
-                      isActive
-                        ? 'bg-orange-50 text-orange-600'
-                        : 'text-gray-600 hover:bg-gray-50'
-                    }`}
-                  >
-                    {item.icon}
-                    {sidebarOpen && (
-                      <span className="font-medium">{item.name}</span>
-                    )}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
-
-        {/* User Info */}
-        <div className="p-4 border-t">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
-              <span className="text-orange-600 font-semibold">
-                {user?.user_metadata?.full_name?.charAt(0).toUpperCase() || 'U'}
-              </span>
-            </div>
-            {sidebarOpen && (
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">
-                  {user?.user_metadata?.full_name || 'Usuario'}
-                </p>
-                <p className="text-xs text-gray-500 truncate">{user?.email}</p>
-              </div>
-            )}
-          </div>
-          <button
-            onClick={handleLogout}
-            className={`w-full flex items-center gap-3 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition ${
-              !sidebarOpen && 'justify-center'
-            }`}
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-              />
-            </svg>
-            {sidebarOpen && <span>Cerrar Sesión</span>}
-          </button>
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <main className="flex-1 overflow-auto">{children}</main>
-    </div>
+        {/* Main Content */}
+        <main className="flex-1 overflow-auto">{children}</main>
+      </div>
+    </OrganizationProvider>
   );
 }

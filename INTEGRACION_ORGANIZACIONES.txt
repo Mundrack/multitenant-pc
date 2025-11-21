@@ -1,0 +1,211 @@
+# 🏢 GUÍA DE INTEGRACIÓN - Organizaciones Jerárquicas
+
+## ✅ PASO 1: Ejecutar Script SQL en Supabase
+
+1. Ve a tu proyecto en Supabase: https://supabase.com/dashboard
+2. Selecciona tu proyecto
+3. Ve a **SQL Editor** (icono de consola)
+4. Abre el archivo: `01_AGREGAR_SUB_ORGANIZACIONES.sql`
+5. Copia TODO el contenido
+6. Pégalo en el SQL Editor
+7. Click en **RUN** (o F5)
+8. Verifica que salga: ✅ Sub-organizaciones configuradas correctamente
+
+---
+
+## ✅ PASO 2: Actualizar app/dashboard/layout.tsx
+
+Abre el archivo: `app/dashboard/layout.tsx`
+
+### 2.1 Agregar imports al inicio:
+
+```typescript
+import { OrganizationProvider } from '@/lib/contexts/OrganizationContext';
+import { OrganizationSelector } from '@/components/OrganizationSelector';
+```
+
+### 2.2 Envolver el contenido con OrganizationProvider:
+
+BUSCA esto en el return:
+```typescript
+return (
+  <div className="min-h-screen bg-neutral-950">
+```
+
+REEMPLÁZALO con:
+```typescript
+return (
+  <OrganizationProvider>
+    <div className="min-h-screen bg-neutral-950">
+```
+
+Y AL FINAL del return, ANTES del último `</div>`, agrega:
+```typescript
+    </div>
+  </OrganizationProvider>
+);
+```
+
+### 2.3 Agregar OrganizationSelector en el navbar:
+
+BUSCA esta línea en el navbar (donde está el logo):
+```typescript
+<h1 className="text-2xl font-bold text-white">Nexus</h1>
+```
+
+JUSTO DESPUÉS, agrega:
+```typescript
+<OrganizationSelector />
+```
+
+---
+
+## 📝 EJEMPLO COMPLETO DE layout.tsx
+
+```typescript
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import Link from 'next/link';
+import { 
+  LayoutDashboard, 
+  CheckSquare, 
+  MessageSquare, 
+  Users, 
+  BarChart3,
+  User,
+  LogOut,
+  Menu,
+  X,
+  Building2  // <-- AGREGAR
+} from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
+import { OrganizationProvider } from '@/lib/contexts/OrganizationContext';  // <-- AGREGAR
+import { OrganizationSelector } from '@/components/OrganizationSelector';  // <-- AGREGAR
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
+  const supabase = createClient();
+
+  // ... resto del código de autenticación ...
+
+  // ... navigation items ...
+
+  return (
+    <OrganizationProvider> {/* <-- AGREGAR */}
+      <div className="min-h-screen bg-neutral-950">
+        {/* Navbar */}
+        <nav className="fixed top-0 left-0 right-0 z-50 bg-neutral-900/95 backdrop-blur-sm border-b border-neutral-800">
+          <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="lg:hidden p-2 text-neutral-400 hover:text-white rounded-lg hover:bg-neutral-800 transition-colors"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+              
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-orange-500 rounded-lg">
+                  <Building2 className="w-5 h-5 text-white" />
+                </div>
+                <h1 className="text-2xl font-bold text-white">Nexus</h1>
+              </div>
+
+              {/* AGREGAR SELECTOR AQUÍ */}
+              <OrganizationSelector />
+            </div>
+
+            {/* ... resto del navbar ... */}
+          </div>
+        </nav>
+
+        {/* ... resto del código ... */}
+      </div>
+    </OrganizationProvider> {/* <-- AGREGAR */}
+  );
+}
+```
+
+---
+
+## ✅ PASO 3: Verificar que Funciona
+
+1. Guarda todos los archivos
+2. En la terminal:
+   ```bash
+   npm run dev
+   ```
+3. Abre http://localhost:3000/dashboard
+4. Deberías ver:
+   - Selector de organización en el navbar (junto al logo)
+   - Nueva opción "Organizaciones" en el sidebar
+5. Click en el selector → Debe mostrar tu organización
+6. Ve a la página de Organizaciones → Crea una sub-organización
+
+---
+
+## 🎯 RUTAS CREADAS
+
+- `/dashboard/organizations` - Gestión de organizaciones
+
+---
+
+## 🚨 SI HAY ERRORES
+
+### Error: "OrganizationProvider is not defined"
+- Verifica que copiaste `OrganizationContext.tsx` en `lib/contexts/`
+- Verifica el import en layout.tsx
+
+### Error: "dim_sub_organizations does not exist"
+- Ejecuta el script SQL en Supabase
+- Verifica que se ejecutó sin errores
+
+### Error: "useOrganizations is not defined"
+- Verifica que copiaste `useOrganizations.ts` en `hooks/`
+
+### No se ve el selector en el navbar
+- Verifica que agregaste `<OrganizationSelector />` en layout.tsx
+- Verifica que esté DENTRO del `<OrganizationProvider>`
+
+---
+
+## ✅ CHECKLIST FINAL
+
+- [ ] Script SQL ejecutado en Supabase
+- [ ] OrganizationProvider agregado en layout.tsx
+- [ ] OrganizationSelector agregado en navbar
+- [ ] `npm run dev` ejecutándose sin errores
+- [ ] Selector visible en el navbar
+- [ ] Página /dashboard/organizations accesible
+- [ ] Puedes crear sub-organizaciones
+
+---
+
+## 📞 SIGUIENTE PASO
+
+Una vez que todo funcione:
+1. Crea 2-3 sub-organizaciones de prueba
+2. Verifica que aparecen en el selector
+3. Avísame para continuar con **Sistema de Invitaciones**
+
+---
+
+## 💡 TIP
+
+Las sub-organizaciones se usan para:
+- Filtrar tareas por sucursal/departamento
+- Asignar usuarios a equipos específicos
+- Ver analytics por sub-organización
+- Control de acceso más granular
+
+¡Todo listo para continuar! 🚀
